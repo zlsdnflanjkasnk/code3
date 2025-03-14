@@ -24,20 +24,48 @@ EXPOSE 8018
 # Step 8: Command to run the app in production mode
 CMD ["yarn", "start"]
 
-# 2 install husky
-npx husky-init
-npm install --save-dev husky
+# 2 install husky and eslint
+yarn add --dev prettier eslint jest husky
 
-# 3 add pre-commit hook
+# 3 add pre-commit hook and edit the pre-commit file
 npx husky add .husky/pre-commit "npx lint-staged"
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 
-# 4 Configure lint-staged: Add lint-staged configuration to package.json:
+npx prettier --check .
+npx eslint .
+npm test
+
+# 4 config eslint.config.cjs
+// eslint.config.cjs
+const babelParser = require("@babel/eslint-parser");
+
+module.exports = {
+  languageOptions: {
+    parser: babelParser,
+    parserOptions: {
+      ecmaVersion: 2020,
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true,
+      },
+      requireConfigFile: false, // Disable Babel config file checking
+    },
+  },
+  rules: {
+    curly: "error",
+    "react/prop-types": "off",
+  },
+};
+
+
+# 5 Configure lint-staged: Add lint-staged configuration to package.json:
 "lint-staged": {
   "*.js": ["eslint --fix", "prettier --write"],
   "*.ts": ["eslint --fix", "prettier --write"]
 }
 
-# 5 create github actions for CI/CD
+# 6 create github actions for CI/CD
 Create a .github/workflows/ci.yml file:
 name: CI/CD Pipeline
 
@@ -71,11 +99,11 @@ jobs:
         npm run prettier -- --check
         npm test
 
-# 6 build docker image and container
+# 7 build docker image and container
 docker build -t bao_yuwei_coding_assignment13 .
 docker run -p 8018:8018 bao_yuwei_coding_assignment13
 
-# 7 try the implemented test and push to github
+# 8 try the implemented test and push to github
 git commit -m "Test"
 git push origin main
 
